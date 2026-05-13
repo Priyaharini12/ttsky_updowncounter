@@ -11,11 +11,11 @@ async def test_project(dut):
 
     dut._log.info("Starting Up/Down Counter Test")
 
-    # Start clock
+    # Clock generation
     clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
-    # Initialize inputs
+    # Initialize signals
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
@@ -23,32 +23,26 @@ async def test_project(dut):
     # Apply reset
     dut.rst_n.value = 0
 
-    # Hold reset for 5 cycles
     for _ in range(5):
         await RisingEdge(dut.clk)
 
     # Release reset
     dut.rst_n.value = 1
 
-    # -------------------------
-    # Test UP Counter
-    # -------------------------
+    # Select UP mode
+    dut.ui_in.value = 1
+
+    # VERY IMPORTANT:
+    # Wait TWO cycles after reset release
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
     dut._log.info("Testing UP counter")
 
-    # ui_in[0] = 1 -> UP mode
-    dut.ui_in.value = 0b00000001
-
-    expected = 0
+    expected = 1
 
     for _ in range(5):
 
-        # Wait for clock edge
-        await RisingEdge(dut.clk)
-
-        # Expected increment
-        expected = (expected + 1) % 16
-
-        # Read counter
         observed = dut.uo_out.value.to_unsigned() & 0xF
 
         dut._log.info(
@@ -58,23 +52,21 @@ async def test_project(dut):
         assert observed == expected, \
             f"UP Counter Error: Expected {expected}, Got {observed}"
 
-    # -------------------------
-    # Test DOWN Counter
-    # -------------------------
+        await RisingEdge(dut.clk)
+
+        expected = (expected + 1) % 16
+
+    # DOWN counter
     dut._log.info("Testing DOWN counter")
 
-    # ui_in[0] = 0 -> DOWN mode
-    dut.ui_in.value = 0b00000000
+    dut.ui_in.value = 0
+
+    await RisingEdge(dut.clk)
+
+    expected = (expected - 1) % 16
 
     for _ in range(5):
 
-        # Wait for clock edge
-        await RisingEdge(dut.clk)
-
-        # Expected decrement
-        expected = (expected - 1) % 16
-
-        # Read counter
         observed = dut.uo_out.value.to_unsigned() & 0xF
 
         dut._log.info(
@@ -83,5 +75,9 @@ async def test_project(dut):
 
         assert observed == expected, \
             f"DOWN Counter Error: Expected {expected}, Got {observed}"
+
+        await RisingEdge(dut.clk)
+
+        expected = (expected - 1) % 16
 
     dut._log.info("TEST PASSED")
