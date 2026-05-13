@@ -1,10 +1,6 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-/* 
-   TinyTapeout cocotb-compatible testbench
-*/
-
 module tb ();
 
   // Dump waveform
@@ -31,12 +27,12 @@ module tb ();
   wire VGND = 1'b0;
 `endif
 
-  // DUT Instantiation
+  // DUT
   tt_um_example user_project (
 
 `ifdef GL_TEST
-      .VPWR   (VPWR),
-      .VGND   (VGND),
+      .VPWR(VPWR),
+      .VGND(VGND),
 `endif
 
       .ui_in   (ui_in),
