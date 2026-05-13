@@ -11,7 +11,7 @@ async def test_project(dut):
 
     dut._log.info("Starting Test")
 
-    # Start clock
+    # 10ns clock
     clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
@@ -29,19 +29,18 @@ async def test_project(dut):
     # Release reset
     dut.rst_n.value = 1
 
-    # Set UP mode
+    # UP mode
     dut.ui_in.value = 1
 
-    # Wait for first active clock
+    # Wait extra cycle after reset
     await RisingEdge(dut.clk)
 
     expected = 1
 
-    # Test UP counter
     for _ in range(5):
 
-        # Wait tiny delay for <= update
-        await Timer(1, unit="ns")
+        # Wait for GL propagation delay
+        await Timer(2, unit="ns")
 
         observed = dut.uo_out.value.to_unsigned() & 0xF
 
