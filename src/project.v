@@ -19,31 +19,30 @@ module tt_um_example (
     // 4-bit counter
     reg [3:0] count;
 
-    // mode select
+    // Mode select
     // ui_in[0] = 1 → UP
     // ui_in[0] = 0 → DOWN
     wire mode;
 
     assign mode = ui_in[0];
 
-    // ACTIVE LOW RESET
+    // Up/Down Counter
     always @(posedge clk or negedge rst_n)
     begin
         if (!rst_n)
             count <= 4'b0000;
 
         else begin
-
             if (mode)
                 count <= count + 1'b1;
-
             else
                 count <= count - 1'b1;
         end
     end
 
     // Output mapping
-    assign uo_out = {4'b0000, count};
+    assign uo_out[3:0] = count;
+    assign uo_out[7:4] = 4'b0000;
 
     // Unused IOs
     assign uio_out = 8'b00000000;
