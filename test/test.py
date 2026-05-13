@@ -11,11 +11,11 @@ async def test_project(dut):
 
     dut._log.info("Starting Up/Down Counter Test")
 
-    # Create clock: 10 ns period
+    # Start clock
     clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
-    # Initialize inputs
+    # Initialize
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
@@ -23,42 +23,46 @@ async def test_project(dut):
     # Apply reset
     dut.rst_n.value = 0
 
-    # Hold reset for few cycles
     for _ in range(5):
         await RisingEdge(dut.clk)
 
     # Release reset
     dut.rst_n.value = 1
 
+    # Wait one clock after reset
+    await RisingEdge(dut.clk)
+
+    # -------------------------
+    # Test UP counter
+    # -------------------------
     dut._log.info("Testing UP counter")
 
-    # mode = 1 → UP counter
-    dut.ui_in.value = 0b00000001
+    dut.ui_in.value = 1
 
-    expected = 0
+    expected = 1
 
-    # Check UP counting
     for _ in range(5):
-
-        await RisingEdge(dut.clk)
-
-        expected = (expected + 1) % 16
 
         observed = dut.uo_out.value.to_unsigned() & 0xF
 
         dut._log.info(
-            f"UP Count Expected={expected} Observed={observed}"
+            f"UP Expected={expected} Observed={observed}"
         )
 
         assert observed == expected, \
             f"UP Counter Error: Expected {expected}, Got {observed}"
 
+        await RisingEdge(dut.clk)
+
+        expected = (expected + 1) % 16
+
+    # -------------------------
+    # Test DOWN counter
+    # -------------------------
     dut._log.info("Testing DOWN counter")
 
-    # mode = 0 → DOWN counter
-    dut.ui_in.value = 0b00000000
+    dut.ui_in.value = 0
 
-    # Check DOWN counting
     for _ in range(5):
 
         await RisingEdge(dut.clk)
@@ -68,7 +72,7 @@ async def test_project(dut):
         observed = dut.uo_out.value.to_unsigned() & 0xF
 
         dut._log.info(
-            f"DOWN Count Expected={expected} Observed={observed}"
+            f"DOWN Expected={expected} Observed={observed}"
         )
 
         assert observed == expected, \
