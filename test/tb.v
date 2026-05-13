@@ -9,12 +9,12 @@ module tb ();
     $dumpvars(0, tb);
   end
 
-  // Inputs
-  reg clk;
-  reg rst_n;
-  reg ena;
-  reg [7:0] ui_in;
-  reg [7:0] uio_in;
+  // Initialize signals
+  reg clk = 0;
+  reg rst_n = 0;
+  reg ena = 0;
+  reg [7:0] ui_in = 0;
+  reg [7:0] uio_in = 0;
 
   // Outputs
   wire [7:0] uo_out;
