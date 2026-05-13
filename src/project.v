@@ -20,8 +20,8 @@ module tt_um_example (
     reg [3:0] count;
 
     // Mode select
-    // ui_in[0] = 1 → UP
-    // ui_in[0] = 0 → DOWN
+    // ui_in[0] = 1 -> UP counter
+    // ui_in[0] = 0 -> DOWN counter
     wire mode;
 
     assign mode = ui_in[0];
@@ -48,7 +48,7 @@ module tt_um_example (
     assign uio_out = 8'b00000000;
     assign uio_oe  = 8'b00000000;
 
-    // Prevent warnings
+    // Prevent unused warnings
     wire _unused = &{ena, uio_in, ui_in[7:1], 1'b0};
 
 endmodule
