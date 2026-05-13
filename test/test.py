@@ -3,38 +3,75 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+from cocotb.triggers import RisingEdge
 
 
 @cocotb.test()
 async def test_project(dut):
-    dut._log.info("Start")
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, unit="us")
+    dut._log.info("Starting Up/Down Counter Test")
+
+    # Create clock: 10 ns period
+    clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
-    # Reset
-    dut._log.info("Reset")
+    # Initialize inputs
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
+
+    # Apply reset
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+
+    # Hold reset for few cycles
+    for _ in range(5):
+        await RisingEdge(dut.clk)
+
+    # Release reset
     dut.rst_n.value = 1
 
-    dut._log.info("Test project behavior")
+    dut._log.info("Testing UP counter")
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+    # mode = 1 → UP counter
+    dut.ui_in.value = 0b00000001
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    expected = 0
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+    # Check UP counting
+    for _ in range(5):
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+        await RisingEdge(dut.clk)
+
+        expected = (expected + 1) % 16
+
+        observed = dut.uo_out.value.to_unsigned() & 0xF
+
+        dut._log.info(
+            f"UP Count Expected={expected} Observed={observed}"
+        )
+
+        assert observed == expected, \
+            f"UP Counter Error: Expected {expected}, Got {observed}"
+
+    dut._log.info("Testing DOWN counter")
+
+    # mode = 0 → DOWN counter
+    dut.ui_in.value = 0b00000000
+
+    # Check DOWN counting
+    for _ in range(5):
+
+        await RisingEdge(dut.clk)
+
+        expected = (expected - 1) % 16
+
+        observed = dut.uo_out.value.to_unsigned() & 0xF
+
+        dut._log.info(
+            f"DOWN Count Expected={expected} Observed={observed}"
+        )
+
+        assert observed == expected, \
+            f"DOWN Counter Error: Expected {expected}, Got {observed}"
+
+    dut._log.info("TEST PASSED")
